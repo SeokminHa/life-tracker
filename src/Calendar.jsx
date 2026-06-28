@@ -200,7 +200,7 @@ export default function Calendar({ onItems, onAddEvent, onEditEvent, onSettings,
             {fasting.lastMealTime ? fastTimeStr : '--:--:--'}
           </span>
           {fastGoalReached && <span className="cal-fasting-check">&#10003;</span>}
-          <button className="cal-fasting-meal-btn" onClick={logMeal}>식사 종료</button>
+          <button className="cal-fasting-meal-btn" onClick={() => logMeal()}>식사 종료</button>
         </div>
 
         {reminders.length > 0 && (
