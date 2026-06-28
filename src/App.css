@@ -102,8 +102,7 @@ html, body, #root {
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  border-left: 4px solid #ccc;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-radius: var(--radius-sm);
   background: var(--card);
   cursor: pointer;
   transition: background 0.15s;
@@ -1168,6 +1167,212 @@ html, body, #root {
     border-radius: 20px;
     max-height: 80vh;
   }
+}
+
+/* ===== Calendar Fasting Mini-Bar ===== */
+.cal-fasting-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 11px 15px;
+  box-shadow: var(--shadow);
+  margin-bottom: 8px;
+}
+
+.cal-fasting-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.cal-fasting-time {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary);
+  flex: 1;
+}
+
+.cal-fasting-time.goal {
+  color: #10B981;
+}
+
+.cal-fasting-check {
+  color: #10B981;
+  font-size: 16px;
+  font-weight: 700;
+  margin-left: -4px;
+}
+
+.cal-fasting-meal-btn {
+  border: none;
+  background: #FFF0F0;
+  color: #E74C3C;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font);
+  padding: 6px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.cal-fasting-meal-btn:active { background: #FFE0E0; }
+
+/* ===== Item Reorder Handle ===== */
+.reorder-handle {
+  width: 28px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.12s, color 0.12s;
+}
+.reorder-handle:active { background: var(--bg); color: var(--text); }
+
+/* ===== Drag Reorder ===== */
+.item-card.dragging {
+  opacity: 0.9;
+}
+
+/* ===== Cycle Presets ===== */
+.cycle-presets {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.cycle-preset-btn {
+  flex: 1;
+  padding: 8px 4px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.cycle-preset-btn:active { transform: scale(0.95); }
+.cycle-preset-btn.selected {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+
+/* ===== Calendar Reminders ===== */
+.cal-reminders {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.cal-reminder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 15px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cal-reminder.overdue,
+.cal-reminder.noRecord {
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+.cal-reminder.dday {
+  background: #FFF7ED;
+  color: #EA580C;
+}
+
+.cal-reminder.warning {
+  background: #FFF7ED;
+  color: #EA580C;
+}
+
+.cal-reminder.normal {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.cal-reminder-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cal-reminder-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.cal-reminder-text {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ===== Toggle Switch ===== */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  margin-top: 8px;
+  cursor: pointer;
+  border-top: 1px solid var(--border);
+}
+
+.toggle-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.toggle-switch {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--border);
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+
+.toggle-switch.on {
+  background: var(--primary);
+}
+
+.toggle-switch.on::after {
+  transform: translateX(20px);
 }
 
 /* ===== Scrollbar ===== */

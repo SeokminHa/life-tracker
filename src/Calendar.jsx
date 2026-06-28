@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useStore } from './store.jsx'
 import { formatDuration } from './utils.js'
 
@@ -10,15 +10,28 @@ function toDateKey(ts) {
 const DOW = ['일', '월', '화', '수', '목', '금', '토']
 
 export default function Calendar({ onItems, onAddEvent, onEditEvent, onSettings, onFastingGoal }) {
-  const { data } = useStore()
+  const { data, logMeal } = useStore()
   const now = new Date()
   const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() })
   const todayKey = toDateKey(now)
   const [selected, setSelected] = useState(todayKey)
   const [filterIds, setFilterIds] = useState(new Set())
   const [showFilters, setShowFilters] = useState(false)
+  const [tick, setTick] = useState(Date.now())
 
+  useEffect(() => {
+    const id = setInterval(() => setTick(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const fasting = data.fasting || {}
+  const fastElapsed = fasting.lastMealTime ? Math.max(0, tick - new Date(fasting.lastMealTime).getTime()) : 0
+  const fH = Math.floor(fastElapsed / 3600000)
+  const fM = Math.floor((fastElapsed % 3600000) / 60000)
+  const fS = Math.floor((fastElapsed % 60000) / 1000)
+  const fastTimeStr = `${String(fH).padStart(2, '0')}:${String(fM).padStart(2, '0')}:${String(fS).padStart(2, '0')}`
   const goalMs = (data.fasting?.goalHours || 16) * 3600000
+  const fastGoalReached = fastElapsed >= goalMs
 
   const allEvents = useMemo(() => {
     const list = []
@@ -35,6 +48,7 @@ export default function Calendar({ onItems, onAddEvent, onEditEvent, onSettings,
         name: item?.name || '?',
         memo: evt.memo,
         type: evt.type || 'use',
+        trackOpen: item?.trackOpen || false,
         color: item?.color || cat?.color || '#5B7FFF',
         icon: cat?.icon || '📋',
         sub: cat?.name || '',
@@ -146,6 +160,27 @@ export default function Calendar({ onItems, onAddEvent, onEditEvent, onSettings,
     })
   }, [data.items, data.categories])
 
+  const reminders = useMemo(() => {
+    return data.items
+      .filter(item => item.cycleDays > 0)
+      .map(item => {
+        const cat = data.categories.find(c => c.id === item.categoryId)
+        const itemColor = item.color || cat?.color || '#5B7FFF'
+        const lastEvt = data.events
+          .filter(e => e.itemId === item.id)
+          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]
+        if (!lastEvt) return { item, color: itemColor, daysLeft: -1, status: 'noRecord' }
+        const daysSince = Math.floor((Date.now() - new Date(lastEvt.timestamp).getTime()) / 86400000)
+        const daysLeft = item.cycleDays - daysSince
+        let status = 'normal'
+        if (daysLeft < 0) status = 'overdue'
+        else if (daysLeft === 0) status = 'dday'
+        else if (daysLeft === 1) status = 'warning'
+        return { item, color: itemColor, daysLeft, status }
+      })
+      .sort((a, b) => a.daysLeft - b.daysLeft)
+  }, [data.items, data.events, data.categories])
+
   return (
     <div className="calendar-view">
       <header className="header">
@@ -159,6 +194,32 @@ export default function Calendar({ onItems, onAddEvent, onEditEvent, onSettings,
       </header>
 
       <main className="content">
+        <div className="cal-fasting-bar">
+          <span className="cal-fasting-label">공복</span>
+          <span className={`cal-fasting-time ${fastGoalReached ? 'goal' : ''}`}>
+            {fasting.lastMealTime ? fastTimeStr : '--:--:--'}
+          </span>
+          {fastGoalReached && <span className="cal-fasting-check">&#10003;</span>}
+          <button className="cal-fasting-meal-btn" onClick={logMeal}>식사 종료</button>
+        </div>
+
+        {reminders.length > 0 && (
+          <div className="cal-reminders">
+            {reminders.map(r => (
+              <div key={r.item.id} className={`cal-reminder ${r.status}`}>
+                <span className="cal-reminder-dot" style={{ backgroundColor: r.color }} />
+                <span className="cal-reminder-name">{r.item.name}</span>
+                <span className="cal-reminder-text">
+                  {r.status === 'noRecord' ? '기록 없음'
+                    : r.status === 'overdue' ? `${Math.abs(r.daysLeft)}일 지남!`
+                    : r.status === 'dday' ? 'D-day!'
+                    : `D-${r.daysLeft}`}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {showFilters && (
           <div className="cal-filter-bar">
             <div className="cal-filter-chips">
@@ -229,7 +290,7 @@ export default function Calendar({ onItems, onAddEvent, onEditEvent, onSettings,
                 <div className="cal-ev-body">
                   <div className="cal-ev-name">
                     {evt.name}
-                    {evt.kind === 'tracker' && (
+                    {evt.kind === 'tracker' && evt.trackOpen && (
                       <span className={`cal-ev-type ${evt.type === 'new' ? 'cal-ev-type-new' : ''}`}>
                         {evt.type === 'new' ? '개봉' : '사용'}
                       </span>

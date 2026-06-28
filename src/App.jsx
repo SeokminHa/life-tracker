@@ -1,11 +1,10 @@
 import { useState, useRef } from 'react'
 import { useStore } from './store.jsx'
-import { toLocalDatetimeStr } from './utils.js'
 import Home from './Home.jsx'
 import ItemDetail from './ItemDetail.jsx'
 import Calendar from './Calendar.jsx'
 
-const ICON_OPTIONS = ['🍽️', '🥗', '💊', '🧴', '💄', '💅', '✂️', '🏠', '📋', '🧹', '🏋️', '🚗', '📚', '🎵', '💰', '❤️', '🌱', '🐾', '👕', '🦷', '🧼', '🩺', '☕', '🍷']
+const ICON_OPTIONS = ['🍽️', '🥗', '💊', '🧴', '🧖', '💅', '✂️', '🏠', '📋', '🧹', '🏋️', '🚗', '📚', '🎵', '💰', '❤️', '🌱', '🐾', '👕', '🦷', '🧼', '🩺', '☕', '🍷']
 const COLOR_OPTIONS = ['#FF6B6B', '#FF8E53', '#FFD93D', '#6BCB77', '#4ECDC4', '#5B7FFF', '#A78BFA', '#E991C5', '#F472B6', '#94A3B8']
 
 function ModalOverlay({ children, onClose }) {
@@ -37,14 +36,16 @@ function LogEventModal({ itemId, presetDate, onClose }) {
         <h2 className="modal-title">기록</h2>
         <p className="modal-subtitle">{item?.name}</p>
 
-        <div className="type-toggle">
-          <button type="button" className={`type-btn ${type === 'use' ? 'active' : ''}`} onClick={() => setType('use')}>
-            사용
-          </button>
-          <button type="button" className={`type-btn ${type === 'new' ? 'active' : ''}`} onClick={() => setType('new')}>
-            개봉
-          </button>
-        </div>
+        {item?.trackOpen && (
+          <div className="type-toggle">
+            <button type="button" className={`type-btn ${type === 'use' ? 'active' : ''}`} onClick={() => setType('use')}>
+              사용
+            </button>
+            <button type="button" className={`type-btn ${type === 'new' ? 'active' : ''}`} onClick={() => setType('new')}>
+              개봉
+            </button>
+          </div>
+        )}
 
         <label className="field-label">날짜</label>
         <input type="date" className="field-input" value={date} onChange={e => setDate(e.target.value)} />
@@ -74,11 +75,14 @@ function AddItemModal({ categoryId, onClose }) {
   const [name, setName] = useState('')
   const [product, setProduct] = useState('')
   const [color, setColor] = useState(cat?.color || '#5B7FFF')
+  const [trackOpen, setTrackOpen] = useState(false)
+  const [useCycle, setUseCycle] = useState(false)
+  const [cycleDays, setCycleDays] = useState(0)
 
   const handleSubmit = e => {
     e.preventDefault()
     if (!name.trim()) return
-    addItem(categoryId, name.trim(), product.trim(), color)
+    addItem(categoryId, name.trim(), product.trim(), color, trackOpen, useCycle ? (Number(cycleDays) || 0) : 0)
     onClose()
   }
 
@@ -119,6 +123,38 @@ function AddItemModal({ categoryId, onClose }) {
             />
           ))}
         </div>
+
+        <label className="toggle-row" onClick={() => setTrackOpen(v => !v)}>
+          <span className="toggle-label">개봉 추적</span>
+          <span className={`toggle-switch ${trackOpen ? 'on' : ''}`} />
+        </label>
+
+        <label className="toggle-row" onClick={() => setUseCycle(v => !v)}>
+          <span className="toggle-label">주기 알림</span>
+          <span className={`toggle-switch ${useCycle ? 'on' : ''}`} />
+        </label>
+        {useCycle && (
+          <>
+            <div className="cycle-presets">
+              {[{ l: '1주', d: 7 }, { l: '2주', d: 14 }, { l: '1개월', d: 30 }, { l: '3개월', d: 90 }].map(p => (
+                <button
+                  key={p.d}
+                  type="button"
+                  className={`cycle-preset-btn ${Number(cycleDays) === p.d ? 'selected' : ''}`}
+                  onClick={() => setCycleDays(p.d)}
+                >{p.l}</button>
+              ))}
+            </div>
+            <input
+              type="number"
+              className="field-input"
+              min="1"
+              placeholder="일 수 입력"
+              value={cycleDays || ''}
+              onChange={e => setCycleDays(e.target.value)}
+            />
+          </>
+        )}
 
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" onClick={onClose}>취소</button>
@@ -199,13 +235,16 @@ function EditItemModal({ itemId, onClose, onDeleted }) {
   const [name, setName] = useState(item?.name || '')
   const [product, setProduct] = useState(item?.currentProduct || '')
   const [color, setColor] = useState(item?.color || cat?.color || '#5B7FFF')
+  const [trackOpen, setTrackOpen] = useState(item?.trackOpen || false)
+  const [useCycle, setUseCycle] = useState((item?.cycleDays || 0) > 0)
+  const [cycleDays, setCycleDays] = useState(item?.cycleDays || 0)
 
   if (!item) return null
 
   const handleSubmit = e => {
     e.preventDefault()
     if (!name.trim()) return
-    updateItem(itemId, { name: name.trim(), currentProduct: product.trim(), color })
+    updateItem(itemId, { name: name.trim(), currentProduct: product.trim(), color, trackOpen, cycleDays: useCycle ? (Number(cycleDays) || 0) : 0 })
     onClose()
   }
 
@@ -246,6 +285,38 @@ function EditItemModal({ itemId, onClose, onDeleted }) {
             />
           ))}
         </div>
+
+        <label className="toggle-row" onClick={() => setTrackOpen(v => !v)}>
+          <span className="toggle-label">개봉 추적</span>
+          <span className={`toggle-switch ${trackOpen ? 'on' : ''}`} />
+        </label>
+
+        <label className="toggle-row" onClick={() => setUseCycle(v => !v)}>
+          <span className="toggle-label">주기 알림</span>
+          <span className={`toggle-switch ${useCycle ? 'on' : ''}`} />
+        </label>
+        {useCycle && (
+          <>
+            <div className="cycle-presets">
+              {[{ l: '1주', d: 7 }, { l: '2주', d: 14 }, { l: '1개월', d: 30 }, { l: '3개월', d: 90 }].map(p => (
+                <button
+                  key={p.d}
+                  type="button"
+                  className={`cycle-preset-btn ${Number(cycleDays) === p.d ? 'selected' : ''}`}
+                  onClick={() => setCycleDays(p.d)}
+                >{p.l}</button>
+              ))}
+            </div>
+            <input
+              type="number"
+              className="field-input"
+              min="1"
+              placeholder="일 수 입력"
+              value={cycleDays || ''}
+              onChange={e => setCycleDays(e.target.value)}
+            />
+          </>
+        )}
 
         <div className="modal-actions">
           <button type="button" className="btn btn-danger" onClick={handleDelete}>삭제</button>
@@ -469,14 +540,16 @@ function EditEventModal({ eventId, onClose }) {
         <h2 className="modal-title">기록 수정</h2>
         <p className="modal-subtitle">{item?.name}</p>
 
-        <div className="type-toggle">
-          <button type="button" className={`type-btn ${type === 'use' ? 'active' : ''}`} onClick={() => setType('use')}>
-            사용
-          </button>
-          <button type="button" className={`type-btn ${type === 'new' ? 'active' : ''}`} onClick={() => setType('new')}>
-            개봉
-          </button>
-        </div>
+        {item?.trackOpen && (
+          <div className="type-toggle">
+            <button type="button" className={`type-btn ${type === 'use' ? 'active' : ''}`} onClick={() => setType('use')}>
+              사용
+            </button>
+            <button type="button" className={`type-btn ${type === 'new' ? 'active' : ''}`} onClick={() => setType('new')}>
+              개봉
+            </button>
+          </div>
+        )}
 
         <label className="field-label">날짜</label>
         <input type="date" className="field-input" value={date} onChange={e => setDate(e.target.value)} />

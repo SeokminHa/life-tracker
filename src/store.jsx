@@ -6,7 +6,7 @@ const STORAGE_KEY = 'life-tracker-data'
 const DEFAULT_DATA = {
   categories: [
     { id: 'cat-food', name: 'Food', icon: '🍽️', color: '#FF6B6B' },
-    { id: 'cat-beauty', name: 'Beauty', icon: '💄', color: '#E991C5' },
+    { id: 'cat-beauty', name: 'Beauty', icon: '🧖', color: '#E991C5' },
     { id: 'cat-daily', name: 'Daily', icon: '📋', color: '#4ECDC4' },
   ],
   items: [],
@@ -78,10 +78,10 @@ export function StoreProvider({ children }) {
       })
     },
 
-    addItem(categoryId, name, currentProduct = '', color = '') {
+    addItem(categoryId, name, currentProduct = '', color = '', trackOpen = false, cycleDays = 0) {
       persist(d => ({
         ...d,
-        items: [...d.items, { id: genId(), categoryId, name, currentProduct, color, createdAt: new Date().toISOString() }],
+        items: [...d.items, { id: genId(), categoryId, name, currentProduct, color, trackOpen, cycleDays, createdAt: new Date().toISOString() }],
       }))
     },
 
@@ -98,6 +98,24 @@ export function StoreProvider({ children }) {
         items: d.items.filter(i => i.id !== id),
         events: d.events.filter(e => e.itemId !== id),
       }))
+    },
+
+    reorderItem(itemId, newCatPosition) {
+      persist(d => {
+        const items = [...d.items]
+        const fromIdx = items.findIndex(i => i.id === itemId)
+        if (fromIdx === -1) return d
+        const [item] = items.splice(fromIdx, 1)
+        const sameCat = items.filter(i => i.categoryId === item.categoryId)
+        if (newCatPosition >= sameCat.length) {
+          const lastIdx = sameCat.length > 0 ? items.indexOf(sameCat[sameCat.length - 1]) + 1 : items.length
+          items.splice(lastIdx, 0, item)
+        } else {
+          const targetIdx = items.indexOf(sameCat[newCatPosition])
+          items.splice(targetIdx, 0, item)
+        }
+        return { ...d, items }
+      })
     },
 
     logEvent(itemId, memo = '', timestamp = null, type = 'use') {

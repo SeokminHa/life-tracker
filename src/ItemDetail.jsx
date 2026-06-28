@@ -61,19 +61,19 @@ export default function ItemDetail({ itemId, onBack, onLogEvent, onEdit }) {
             <div className="stat-value">{useCount}</div>
             <div className="stat-label">사용</div>
           </div>
-          {newCount > 0 && (
+          {item.trackOpen && newCount > 0 && (
             <div className="stat-card">
               <div className="stat-value">{newCount}</div>
               <div className="stat-label">개봉</div>
             </div>
           )}
-          {avgNewDur && (
+          {item.trackOpen && avgNewDur && (
             <div className="stat-card">
               <div className="stat-value">{formatDuration(avgNewDur)}</div>
               <div className="stat-label">개봉 주기</div>
             </div>
           )}
-          {openedAgo && openedAgo > 0 && (
+          {item.trackOpen && openedAgo && openedAgo > 0 && (
             <div className="stat-card">
               <div className="stat-value" style={{ color: accent }}>{formatDuration(openedAgo)}</div>
               <div className="stat-label">개봉 후</div>
@@ -100,9 +100,11 @@ export default function ItemDetail({ itemId, onBack, onLogEvent, onEdit }) {
                 <div className="tl-body">
                   <div className="tl-top">
                     <span className="tl-date">{formatDate(evt.timestamp)}</span>
-                    <span className={`tl-badge ${isNew ? 'tl-badge-new' : 'tl-badge-use'}`}>
-                      {isNew ? '개봉' : '사용'}
-                    </span>
+                    {item.trackOpen && (
+                      <span className={`tl-badge ${isNew ? 'tl-badge-new' : 'tl-badge-use'}`}>
+                        {isNew ? '개봉' : '사용'}
+                      </span>
+                    )}
                     <button
                       className="tl-delete"
                       onClick={() => { if (confirm('이 기록을 삭제할까요?')) deleteEvent(evt.id) }}
