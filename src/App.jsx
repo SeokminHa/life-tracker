@@ -5,7 +5,14 @@ import ItemDetail from './ItemDetail.jsx'
 import Calendar from './Calendar.jsx'
 
 const ICON_OPTIONS = ['🍽️', '🥗', '💊', '🧴', '🧖', '💅', '✂️', '🏠', '📋', '🧹', '🏋️', '🚗', '📚', '🎵', '💰', '❤️', '🌱', '🐾', '👕', '🦷', '🧼', '🩺', '☕', '🍷']
-const COLOR_OPTIONS = ['#FF6B6B', '#FF8E53', '#FFD93D', '#6BCB77', '#4ECDC4', '#5B7FFF', '#A78BFA', '#E991C5', '#F472B6', '#94A3B8']
+const COLOR_OPTIONS = [
+  '#FF6B6B', '#EF4444', '#F97316', '#FF8E53',
+  '#FFD93D', '#EAB308', '#84CC16', '#6BCB77',
+  '#10B981', '#4ECDC4', '#14B8A6', '#06B6D4',
+  '#0EA5E9', '#5B7FFF', '#3B82F6', '#6366F1',
+  '#A78BFA', '#8B5CF6', '#E991C5', '#F472B6',
+  '#EC4899', '#D946EF', '#94A3B8', '#78716C',
+]
 
 function ModalOverlay({ children, onClose }) {
   return (
@@ -169,32 +176,31 @@ function AddCategoryModal({ onClose }) {
   const { addCategory } = useStore()
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('📋')
-  const [color, setColor] = useState('#5B7FFF')
 
   const handleSubmit = e => {
     e.preventDefault()
     if (!name.trim()) return
-    addCategory(name.trim(), icon, color)
+    addCategory(name.trim(), icon, '#5B7FFF')
     onClose()
   }
 
   return (
     <ModalOverlay onClose={onClose}>
       <form onSubmit={handleSubmit}>
-        <h2 className="modal-title">New Category</h2>
+        <h2 className="modal-title">카테고리 추가</h2>
 
-        <label className="field-label">Name *</label>
+        <label className="field-label">이름 *</label>
         <input
           type="text"
           className="field-input"
-          placeholder="e.g. Health, Supplements..."
+          placeholder="예: Health, Supplements..."
           value={name}
           onChange={e => setName(e.target.value)}
           autoFocus
           required
         />
 
-        <label className="field-label">Icon</label>
+        <label className="field-label">아이콘</label>
         <div className="picker-grid">
           {ICON_OPTIONS.map(ic => (
             <button
@@ -206,22 +212,9 @@ function AddCategoryModal({ onClose }) {
           ))}
         </div>
 
-        <label className="field-label">Color</label>
-        <div className="picker-grid">
-          {COLOR_OPTIONS.map(c => (
-            <button
-              key={c}
-              type="button"
-              className={`picker-color ${color === c ? 'selected' : ''}`}
-              style={{ backgroundColor: c }}
-              onClick={() => setColor(c)}
-            />
-          ))}
-        </div>
-
         <div className="modal-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button type="submit" className="btn btn-primary">Create</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>취소</button>
+          <button type="submit" className="btn btn-primary">추가</button>
         </div>
       </form>
     </ModalOverlay>
@@ -334,7 +327,6 @@ function EditCategoryModal({ categoryId, onClose }) {
   const cat = data.categories.find(c => c.id === categoryId)
   const [name, setName] = useState(cat?.name || '')
   const [icon, setIcon] = useState(cat?.icon || '📋')
-  const [color, setColor] = useState(cat?.color || '#5B7FFF')
 
   if (!cat) return null
 
@@ -343,14 +335,14 @@ function EditCategoryModal({ categoryId, onClose }) {
   const handleSubmit = e => {
     e.preventDefault()
     if (!name.trim()) return
-    updateCategory(categoryId, { name: name.trim(), icon, color })
+    updateCategory(categoryId, { name: name.trim(), icon })
     onClose()
   }
 
   const handleDelete = () => {
     const msg = itemCount > 0
-      ? `Delete "${cat.name}" and its ${itemCount} item(s) with all events?`
-      : `Delete "${cat.name}"?`
+      ? `"${cat.name}" 카테고리와 ${itemCount}개 항목을 모두 삭제할까요?`
+      : `"${cat.name}" 카테고리를 삭제할까요?`
     if (confirm(msg)) {
       deleteCategory(categoryId)
       onClose()
@@ -360,12 +352,12 @@ function EditCategoryModal({ categoryId, onClose }) {
   return (
     <ModalOverlay onClose={onClose}>
       <form onSubmit={handleSubmit}>
-        <h2 className="modal-title">Edit Category</h2>
+        <h2 className="modal-title">카테고리 수정</h2>
 
-        <label className="field-label">Name</label>
+        <label className="field-label">이름</label>
         <input type="text" className="field-input" value={name} onChange={e => setName(e.target.value)} required />
 
-        <label className="field-label">Icon</label>
+        <label className="field-label">아이콘</label>
         <div className="picker-grid">
           {ICON_OPTIONS.map(ic => (
             <button
@@ -377,24 +369,11 @@ function EditCategoryModal({ categoryId, onClose }) {
           ))}
         </div>
 
-        <label className="field-label">Color</label>
-        <div className="picker-grid">
-          {COLOR_OPTIONS.map(c => (
-            <button
-              key={c}
-              type="button"
-              className={`picker-color ${color === c ? 'selected' : ''}`}
-              style={{ backgroundColor: c }}
-              onClick={() => setColor(c)}
-            />
-          ))}
-        </div>
-
         <div className="modal-actions">
-          <button type="button" className="btn btn-danger" onClick={handleDelete}>Delete</button>
+          <button type="button" className="btn btn-danger" onClick={handleDelete}>삭제</button>
           <div className="spacer" />
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button type="submit" className="btn btn-primary">Save</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>취소</button>
+          <button type="submit" className="btn btn-primary">저장</button>
         </div>
       </form>
     </ModalOverlay>
