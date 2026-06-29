@@ -10,7 +10,7 @@ function toDateKey(ts) {
 const DOW = ['일', '월', '화', '수', '목', '금', '토']
 
 export default function Calendar({ onItems, onAddEvent, onEditEvent, onSettings, onFastingGoal }) {
-  const { data, logMeal } = useStore()
+  const { data, endMeal, startEating } = useStore()
   const now = new Date()
   const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() })
   const todayKey = toDateKey(now)
@@ -25,13 +25,14 @@ export default function Calendar({ onItems, onAddEvent, onEditEvent, onSettings,
   }, [])
 
   const fasting = data.fasting || {}
-  const fastElapsed = fasting.lastMealTime ? Math.max(0, tick - new Date(fasting.lastMealTime).getTime()) : 0
+  const isFasting = fasting.state === 'fasting'
+  const fastElapsed = isFasting && fasting.stateTime ? Math.max(0, tick - new Date(fasting.stateTime).getTime()) : 0
   const fH = Math.floor(fastElapsed / 3600000)
   const fM = Math.floor((fastElapsed % 3600000) / 60000)
   const fS = Math.floor((fastElapsed % 60000) / 1000)
   const fastTimeStr = `${String(fH).padStart(2, '0')}:${String(fM).padStart(2, '0')}:${String(fS).padStart(2, '0')}`
   const goalMs = (data.fasting?.goalHours || 16) * 3600000
-  const fastGoalReached = fastElapsed >= goalMs
+  const fastGoalReached = isFasting && fastElapsed >= goalMs
 
   const allEvents = useMemo(() => {
     const list = []
@@ -71,21 +72,18 @@ export default function Calendar({ onItems, onAddEvent, onEditEvent, onSettings,
       })
     })
 
-    if (data.fasting?.lastMealTime) {
-      const covered = (data.fasting.periods || []).some(p => p.end === data.fasting.lastMealTime)
-      if (!covered) {
-        list.push({
-          kind: 'meal',
-          itemId: '__meal__',
-          date: toDateKey(data.fasting.lastMealTime),
-          time: data.fasting.lastMealTime,
-          name: '식사',
-          memo: '',
-          color: '#FF6B6B',
-          icon: '🍴',
-          sub: '',
-        })
-      }
+    if (data.fasting?.state === 'eating' && data.fasting?.stateTime) {
+      list.push({
+        kind: 'meal',
+        itemId: '__meal__',
+        date: toDateKey(data.fasting.stateTime),
+        time: data.fasting.stateTime,
+        name: '식사 시작',
+        memo: '',
+        color: '#FF6B6B',
+        icon: '🍴',
+        sub: '',
+      })
     }
 
     return list
@@ -195,12 +193,16 @@ export default function Calendar({ onItems, onAddEvent, onEditEvent, onSettings,
 
       <main className="content">
         <div className="cal-fasting-bar">
-          <span className="cal-fasting-label">공복</span>
+          <span className="cal-fasting-label">{isFasting ? '공복' : '식사'}</span>
           <span className={`cal-fasting-time ${fastGoalReached ? 'goal' : ''}`}>
-            {fasting.lastMealTime ? fastTimeStr : '--:--:--'}
+            {isFasting ? fastTimeStr : '--:--:--'}
           </span>
           {fastGoalReached && <span className="cal-fasting-check">&#10003;</span>}
-          <button className="cal-fasting-meal-btn" onClick={() => logMeal()}>식사 종료</button>
+          {isFasting ? (
+            <button className="cal-fasting-meal-btn" onClick={() => startEating()}>음식 섭취</button>
+          ) : (
+            <button className="cal-fasting-meal-btn" onClick={() => endMeal()}>식사 종료</button>
+          )}
         </div>
 
         {reminders.length > 0 && (

@@ -12,10 +12,16 @@ const DEFAULT_DATA = {
   items: [],
   events: [],
   fasting: {
-    lastMealTime: null,
+    state: null,
+    stateTime: null,
     goalHours: 16,
     periods: [],
   },
+}
+
+function toDateKey(ts) {
+  const d = new Date(ts)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 function load() {
@@ -24,7 +30,12 @@ function load() {
     if (raw) {
       const data = JSON.parse(raw)
       if (!data.fasting) {
-        data.fasting = { lastMealTime: null, goalHours: 16, periods: [] }
+        data.fasting = { state: null, stateTime: null, goalHours: 16, periods: [] }
+      }
+      if (data.fasting.lastMealTime && !data.fasting.state) {
+        data.fasting.state = 'fasting'
+        data.fasting.stateTime = data.fasting.lastMealTime
+        delete data.fasting.lastMealTime
       }
       return data
     }
@@ -145,20 +156,30 @@ export function StoreProvider({ children }) {
       }))
     },
 
-    logMeal(timestamp = null) {
-      const now = timestamp || new Date().toISOString()
+    endMeal() {
+      persist(d => ({
+        ...d,
+        fasting: { ...d.fasting, state: 'fasting', stateTime: new Date().toISOString() },
+      }))
+    },
+
+    startEating() {
+      const now = new Date().toISOString()
       persist(d => {
         const fasting = { ...d.fasting }
         const periods = [...(fasting.periods || [])]
-        if (fasting.lastMealTime) {
-          periods.push({
-            id: genId(),
-            start: fasting.lastMealTime,
-            end: now,
-            duration: new Date(now) - new Date(fasting.lastMealTime),
-          })
+        if (fasting.state === 'fasting' && fasting.stateTime) {
+          const duration = new Date(now) - new Date(fasting.stateTime)
+          const dateKey = toDateKey(now)
+          const existing = periods.findIndex(p => p.date === dateKey)
+          const newPeriod = { id: genId(), start: fasting.stateTime, end: now, duration, date: dateKey }
+          if (existing >= 0) {
+            if (duration > periods[existing].duration) periods[existing] = newPeriod
+          } else {
+            periods.push(newPeriod)
+          }
         }
-        return { ...d, fasting: { ...fasting, lastMealTime: now, periods } }
+        return { ...d, fasting: { ...fasting, state: 'eating', stateTime: now, periods } }
       })
     },
 

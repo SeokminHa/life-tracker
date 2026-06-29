@@ -6,9 +6,9 @@ const RADIUS = 52
 const CIRC = 2 * Math.PI * RADIUS
 
 export default function FastingCard({ onGoalSettings }) {
-  const { data, logMeal } = useStore()
+  const { data, endMeal, startEating } = useStore()
   const fasting = data.fasting || {}
-  const { lastMealTime, goalHours = 16, periods = [] } = fasting
+  const { state, stateTime, goalHours = 16, periods = [] } = fasting
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
@@ -16,19 +16,16 @@ export default function FastingCard({ onGoalSettings }) {
     return () => clearInterval(id)
   }, [])
 
-  const elapsed = lastMealTime ? Math.max(0, now - new Date(lastMealTime).getTime()) : 0
+  const isFasting = state === 'fasting'
+  const elapsed = isFasting && stateTime ? Math.max(0, now - new Date(stateTime).getTime()) : 0
   const h = Math.floor(elapsed / 3600000)
   const m = Math.floor((elapsed % 3600000) / 60000)
   const s = Math.floor((elapsed % 60000) / 1000)
 
-  const progress = goalHours > 0 ? Math.min(elapsed / (goalHours * 3600000), 1) : 0
-  const goalReached = progress >= 1
-  const accent = goalReached ? '#10B981' : '#5B7FFF'
+  const progress = isFasting && goalHours > 0 ? Math.min(elapsed / (goalHours * 3600000), 1) : 0
+  const goalReached = isFasting && progress >= 1
+  const accent = goalReached ? '#10B981' : isFasting ? '#5B7FFF' : '#94A3B8'
   const dashOffset = CIRC * (1 - progress)
-
-  const handleMeal = () => {
-    logMeal()
-  }
 
   const recentPeriods = periods.slice(-5).reverse()
 
@@ -45,7 +42,7 @@ export default function FastingCard({ onGoalSettings }) {
         <div className="fasting-ring-wrap">
           <svg viewBox="0 0 120 120" className="fasting-ring">
             <circle cx="60" cy="60" r={RADIUS} fill="none" stroke="#e5e7eb" strokeWidth="8" />
-            {lastMealTime && (
+            {isFasting && (
               <circle
                 cx="60" cy="60" r={RADIUS}
                 fill="none"
@@ -61,44 +58,57 @@ export default function FastingCard({ onGoalSettings }) {
           </svg>
           <div className="fasting-ring-inner">
             <div className="fasting-pct" style={{ color: accent }}>
-              {lastMealTime ? `${Math.floor(progress * 100)}%` : '—'}
+              {isFasting ? `${Math.floor(progress * 100)}%` : '—'}
             </div>
           </div>
         </div>
 
         <div className="fasting-info">
           <div className="fasting-time" style={{ color: accent }}>
-            {lastMealTime
+            {isFasting
               ? `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
               : '--:--:--'}
           </div>
           <div className="fasting-status">
-            {!lastMealTime
-              ? '첫 식사를 기록하세요'
-              : goalReached
-                ? `목표 달성! (+${Math.floor((elapsed - goalHours * 3600000) / 3600000)}h)`
-                : '공복 진행 중'}
+            {!state
+              ? '식사 종료를 눌러 시작하세요'
+              : state === 'eating'
+                ? '식사 중'
+                : goalReached
+                  ? `목표 달성! (+${Math.floor((elapsed - goalHours * 3600000) / 3600000)}h)`
+                  : '공복 진행 중'}
           </div>
-          {lastMealTime && (
+          {stateTime && (
             <div className="fasting-last">
-              마지막 식사: {new Date(lastMealTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+              {isFasting ? '마지막 식사 종료' : '식사 시작'}: {new Date(stateTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
             </div>
           )}
         </div>
       </div>
 
-      <button className="fasting-meal-btn" onClick={handleMeal}>
-        &#127860; 식사 완료
-      </button>
+      {isFasting ? (
+        <button className="fasting-meal-btn" onClick={() => startEating()}>
+          &#127860; 음식 섭취
+        </button>
+      ) : (
+        <button className="fasting-meal-btn" onClick={() => endMeal()}>
+          &#9201;&#65039; 식사 종료
+        </button>
+      )}
 
       {recentPeriods.length > 0 && (
         <div className="fasting-history">
-          <div className="fasting-hist-title">최근 단식 기록</div>
+          <div className="fasting-hist-title">일별 최장 공복</div>
           {recentPeriods.map(p => {
             const met = p.duration >= goalHours * 3600000
             return (
               <div key={p.id} className="fasting-hist-row">
                 <span className="fasting-hist-date">{formatDate(p.end)}</span>
+                <span className="fasting-hist-time">
+                  {new Date(p.start).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                  {' → '}
+                  {new Date(p.end).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
                 <span className={`fasting-hist-dur ${met ? 'met' : ''}`}>
                   {formatDuration(p.duration)}
                   {met && ' ✓'}
