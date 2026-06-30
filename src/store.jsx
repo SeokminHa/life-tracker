@@ -183,6 +183,18 @@ export function StoreProvider({ children }) {
       })
     },
 
+    updateFastingPeriod(id, start, end) {
+      persist(d => ({
+        ...d,
+        fasting: {
+          ...d.fasting,
+          periods: (d.fasting.periods || []).map(p =>
+            p.id === id ? { ...p, start, end, duration: new Date(end) - new Date(start), date: toDateKey(end) } : p
+          ),
+        },
+      }))
+    },
+
     updateFastingGoal(hours) {
       persist(d => ({
         ...d,

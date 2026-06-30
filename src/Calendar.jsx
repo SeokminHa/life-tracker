@@ -9,7 +9,7 @@ function toDateKey(ts) {
 
 const DOW = ['일', '월', '화', '수', '목', '금', '토']
 
-export default function Calendar({ onItems, onAddEvent, onEditEvent, onSettings, onFastingGoal }) {
+export default function Calendar({ onItems, onAddEvent, onEditEvent, onEditFasting, onSettings, onFastingGoal }) {
   const { data, endMeal, startEating } = useStore()
   const now = new Date()
   const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() })
@@ -60,6 +60,7 @@ export default function Calendar({ onItems, onAddEvent, onEditEvent, onSettings,
       list.push({
         kind: 'fasting',
         itemId: '__fasting__',
+        periodId: p.id,
         date: toDateKey(p.end),
         time: p.end,
         name: '단식 완료',
@@ -285,8 +286,8 @@ export default function Calendar({ onItems, onAddEvent, onEditEvent, onSettings,
             dayEvents.map((evt, i) => (
               <div
                 key={i}
-                className={`cal-ev ${evt.kind === 'tracker' ? 'cal-ev-clickable' : ''}`}
-                onClick={() => evt.kind === 'tracker' && onEditEvent(evt.eventId)}
+                className={`cal-ev ${evt.kind === 'tracker' || evt.kind === 'fasting' ? 'cal-ev-clickable' : ''}`}
+                onClick={() => evt.kind === 'tracker' ? onEditEvent(evt.eventId) : evt.kind === 'fasting' && onEditFasting(evt.periodId)}
               >
                 <span className="cal-ev-dot" style={{ backgroundColor: evt.color }} />
                 <div className="cal-ev-body">

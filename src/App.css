@@ -801,6 +801,18 @@ html, body, #root {
   font-size: 13px;
 }
 
+.fasting-hist-row.clickable {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin: 0 -8px;
+  transition: background 0.15s ease;
+}
+
+.fasting-hist-row.clickable:active {
+  background: var(--primary-bg);
+}
+
 .fasting-hist-date {
   color: var(--text-2);
   min-width: 70px;
@@ -819,6 +831,14 @@ html, body, #root {
 
 .fasting-hist-dur.met {
   color: #10B981;
+}
+
+.fasting-edit-dur {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
+  padding: 8px 0;
 }
 
 /* ===== Fasting Goal Presets ===== */

@@ -5,7 +5,7 @@ import { formatDuration, formatDate } from './utils.js'
 const RADIUS = 52
 const CIRC = 2 * Math.PI * RADIUS
 
-export default function FastingCard({ onGoalSettings }) {
+export default function FastingCard({ onGoalSettings, onEditFasting }) {
   const { data, endMeal, startEating } = useStore()
   const fasting = data.fasting || {}
   const { state, stateTime, goalHours = 16, periods = [] } = fasting
@@ -102,7 +102,7 @@ export default function FastingCard({ onGoalSettings }) {
           {recentPeriods.map(p => {
             const met = p.duration >= goalHours * 3600000
             return (
-              <div key={p.id} className="fasting-hist-row">
+              <div key={p.id} className="fasting-hist-row clickable" onClick={() => onEditFasting && onEditFasting(p.id)}>
                 <span className="fasting-hist-date">{formatDate(p.end)}</span>
                 <span className="fasting-hist-time">
                   {new Date(p.start).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}

@@ -553,6 +553,66 @@ function EditEventModal({ eventId, onClose }) {
   )
 }
 
+function EditFastingModal({ periodId, onClose }) {
+  const { data, updateFastingPeriod, deleteFastingPeriod } = useStore()
+  const period = (data.fasting?.periods || []).find(p => p.id === periodId)
+
+  const toLocalInput = (iso) => {
+    if (!iso) return ''
+    const d = new Date(iso)
+    const pad = (n) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  }
+
+  const [start, setStart] = useState(toLocalInput(period?.start))
+  const [end, setEnd] = useState(toLocalInput(period?.end))
+
+  if (!period) return null
+
+  const handleSubmit = e => {
+    e.preventDefault()
+    if (!start || !end) return
+    updateFastingPeriod(periodId, new Date(start).toISOString(), new Date(end).toISOString())
+    onClose()
+  }
+
+  const handleDelete = () => {
+    if (confirm('이 단식 기록을 삭제할까요?')) {
+      deleteFastingPeriod(periodId)
+      onClose()
+    }
+  }
+
+  const dur = start && end ? Math.max(0, new Date(end) - new Date(start)) : 0
+  const durH = Math.floor(dur / 3600000)
+  const durM = Math.floor((dur % 3600000) / 60000)
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <form onSubmit={handleSubmit}>
+        <h2 className="modal-title">단식 기록 수정</h2>
+
+        <label className="field-label">공복 시작 (식사 종료)</label>
+        <input type="datetime-local" className="field-input" value={start} onChange={e => setStart(e.target.value)} required />
+
+        <label className="field-label">공복 종료 (음식 섭취)</label>
+        <input type="datetime-local" className="field-input" value={end} onChange={e => setEnd(e.target.value)} required />
+
+        {dur > 0 && (
+          <div className="fasting-edit-dur">공복 시간: {durH}시간 {durM}분</div>
+        )}
+
+        <div className="modal-actions">
+          <button type="button" className="btn btn-danger" onClick={handleDelete}>삭제</button>
+          <div className="spacer" />
+          <button type="button" className="btn btn-ghost" onClick={onClose}>취소</button>
+          <button type="submit" className="btn btn-primary">저장</button>
+        </div>
+      </form>
+    </ModalOverlay>
+  )
+}
+
 function ItemPickerModal({ date, onSelect, onClose }) {
   const { data } = useStore()
 
@@ -614,6 +674,7 @@ export default function App() {
           onItems={goItems}
           onAddEvent={date => setModal({ type: 'pickItem', date })}
           onEditEvent={eventId => setModal({ type: 'editEvent', eventId })}
+          onEditFasting={periodId => setModal({ type: 'editFasting', periodId })}
           onSettings={() => setModal({ type: 'settings' })}
           onFastingGoal={() => setModal({ type: 'fastingGoal' })}
         />
@@ -628,6 +689,7 @@ export default function App() {
           onAddCategory={() => setModal({ type: 'addCategory' })}
           onEditCategory={id => setModal({ type: 'editCategory', categoryId: id })}
           onFastingGoal={() => setModal({ type: 'fastingGoal' })}
+          onEditFasting={periodId => setModal({ type: 'editFasting', periodId })}
         />
       )}
 
@@ -648,6 +710,7 @@ export default function App() {
         />
       )}
       {modal?.type === 'editEvent' && <EditEventModal eventId={modal.eventId} onClose={closeModal} />}
+      {modal?.type === 'editFasting' && <EditFastingModal periodId={modal.periodId} onClose={closeModal} />}
       {modal?.type === 'logEvent' && <LogEventModal itemId={modal.itemId} presetDate={modal.presetDate} onClose={closeModal} />}
       {modal?.type === 'addItem' && <AddItemModal categoryId={modal.categoryId} onClose={closeModal} />}
       {modal?.type === 'addCategory' && <AddCategoryModal onClose={closeModal} />}

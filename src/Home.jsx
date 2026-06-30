@@ -3,7 +3,7 @@ import { useStore } from './store.jsx'
 import { getLastEvent, formatTimeAgo, getItemEvents, formatDuration } from './utils.js'
 import FastingCard from './FastingCard.jsx'
 
-export default function Home({ onBack, onViewItem, onLogEvent, onAddItem, onAddCategory, onEditCategory, onFastingGoal }) {
+export default function Home({ onBack, onViewItem, onLogEvent, onAddItem, onAddCategory, onEditCategory, onFastingGoal, onEditFasting }) {
   const { data, reorderItem } = useStore()
   const dragRef = useRef(null)
   const justDraggedRef = useRef(false)
@@ -79,7 +79,7 @@ export default function Home({ onBack, onViewItem, onLogEvent, onAddItem, onAddC
       </header>
 
       <main className="content">
-        <FastingCard onGoalSettings={onFastingGoal} />
+        <FastingCard onGoalSettings={onFastingGoal} onEditFasting={onEditFasting} />
 
         {data.categories.map(cat => {
           const items = data.items.filter(i => i.categoryId === cat.id)
