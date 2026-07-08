@@ -10,7 +10,7 @@ function toDateKey(ts) {
 const DOW = ['일', '월', '화', '수', '목', '금', '토']
 
 export default function Calendar({ onItems, onAddEvent, onEditEvent, onEditFasting, onSettings, onFastingGoal }) {
-  const { data, endMeal, startEating } = useStore()
+  const { data, endMeal, startEating, resetFasting } = useStore()
   const now = new Date()
   const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() })
   const todayKey = toDateKey(now)
@@ -25,6 +25,14 @@ export default function Calendar({ onItems, onAddEvent, onEditEvent, onEditFasti
   }, [])
 
   const fasting = data.fasting || {}
+
+  useEffect(() => {
+    if (fasting.state && fasting.stateTime) {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      if (new Date(fasting.stateTime) < today) resetFasting()
+    }
+  }, [tick, fasting.state, fasting.stateTime, resetFasting])
   const isFasting = fasting.state === 'fasting'
   const fastElapsed = isFasting && fasting.stateTime ? Math.max(0, tick - new Date(fasting.stateTime).getTime()) : 0
   const fH = Math.floor(fastElapsed / 3600000)

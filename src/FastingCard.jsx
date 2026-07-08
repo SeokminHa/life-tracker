@@ -6,7 +6,7 @@ const RADIUS = 52
 const CIRC = 2 * Math.PI * RADIUS
 
 export default function FastingCard({ onGoalSettings, onEditFasting }) {
-  const { data, endMeal, startEating } = useStore()
+  const { data, endMeal, startEating, resetFasting } = useStore()
   const fasting = data.fasting || {}
   const { state, stateTime, goalHours = 16, periods = [] } = fasting
   const [now, setNow] = useState(Date.now())
@@ -15,6 +15,14 @@ export default function FastingCard({ onGoalSettings, onEditFasting }) {
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    if (state && stateTime) {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      if (new Date(stateTime) < today) resetFasting()
+    }
+  }, [now, state, stateTime, resetFasting])
 
   const isFasting = state === 'fasting'
   const elapsed = isFasting && stateTime ? Math.max(0, now - new Date(stateTime).getTime()) : 0

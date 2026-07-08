@@ -37,6 +37,14 @@ function load() {
         data.fasting.stateTime = data.fasting.lastMealTime
         delete data.fasting.lastMealTime
       }
+      if (data.fasting.state && data.fasting.stateTime) {
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        if (new Date(data.fasting.stateTime) < today) {
+          data.fasting.state = null
+          data.fasting.stateTime = null
+        }
+      }
       return data
     }
   } catch {}
@@ -199,6 +207,13 @@ export function StoreProvider({ children }) {
       persist(d => ({
         ...d,
         fasting: { ...d.fasting, goalHours: hours },
+      }))
+    },
+
+    resetFasting() {
+      persist(d => ({
+        ...d,
+        fasting: { ...d.fasting, state: null, stateTime: null },
       }))
     },
 
