@@ -38,9 +38,7 @@ function load() {
         delete data.fasting.lastMealTime
       }
       if (data.fasting.state && data.fasting.stateTime) {
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        if (new Date(data.fasting.stateTime) < today) {
+        if (Date.now() - new Date(data.fasting.stateTime).getTime() > 24 * 3600000) {
           data.fasting.state = null
           data.fasting.stateTime = null
         }

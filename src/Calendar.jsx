@@ -28,9 +28,7 @@ export default function Calendar({ onItems, onAddEvent, onEditEvent, onEditFasti
 
   useEffect(() => {
     if (fasting.state && fasting.stateTime) {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      if (new Date(fasting.stateTime) < today) resetFasting()
+      if (Date.now() - new Date(fasting.stateTime).getTime() > 24 * 3600000) resetFasting()
     }
   }, [tick, fasting.state, fasting.stateTime, resetFasting])
   const isFasting = fasting.state === 'fasting'

@@ -18,9 +18,7 @@ export default function FastingCard({ onGoalSettings, onEditFasting }) {
 
   useEffect(() => {
     if (state && stateTime) {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      if (new Date(stateTime) < today) resetFasting()
+      if (Date.now() - new Date(stateTime).getTime() > 24 * 3600000) resetFasting()
     }
   }, [now, state, stateTime, resetFasting])
 
